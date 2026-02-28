@@ -1,21 +1,39 @@
 ﻿import { NavLink, Outlet } from 'react-router-dom'
+import type { AdminPartnerLevel, PartnerFeatures } from '../admin/types'
 import type { User } from '../types'
 
 type DashboardLayoutProps = {
   user: User
   onLogout: () => void
+  partnerLevel: AdminPartnerLevel
+  partnerStatus: 'active' | 'blocked'
+  features: PartnerFeatures
 }
 
-const menu = [
-  { to: '/app/home', label: 'Главная' },
-  { to: '/app/leads', label: 'Лиды' },
-  { to: '/app/education', label: 'Обучение' },
-  { to: '/app/referral', label: 'Реферальная ссылка' },
-  { to: '/app/payouts', label: 'Выплаты' },
-  { to: '/app/support', label: 'Поддержка' },
-]
+function levelLabel(level: AdminPartnerLevel) {
+  if (level === 'base') return 'Базовый'
+  if (level === 'extended') return 'Расширенный'
+  return 'Максимальный'
+}
 
-export function DashboardLayout({ user, onLogout }: DashboardLayoutProps) {
+export function DashboardLayout({
+  user,
+  onLogout,
+  partnerLevel,
+  partnerStatus,
+  features,
+}: DashboardLayoutProps) {
+  const menu = [
+    { to: '/app/home', label: 'Главная' },
+    { to: '/app/leads', label: 'Лиды' },
+    { to: '/app/education', label: 'Обучение' },
+    { to: '/app/referral', label: 'Реферальная ссылка' },
+    { to: '/app/payouts', label: 'Выплаты' },
+    ...(features.advancedReporting ? [{ to: '/app/reports', label: 'Отчеты' }] : []),
+    ...(features.apiIntegration ? [{ to: '/app/api', label: 'Интеграция / API' }] : []),
+    { to: '/app/support', label: 'Поддержка' },
+  ]
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -27,14 +45,15 @@ export function DashboardLayout({ user, onLogout }: DashboardLayoutProps) {
               <strong>Партнер</strong>
             </div>
           </div>
+
           <div className="level-card">
             <span className="badge">Уровень</span>
-            <strong>Базовый</strong>
-            <p>Доступ к базовым инструментам и ключевой аналитике.</p>
+            <strong>{levelLabel(partnerLevel)}</strong>
+            <p>Статус: {partnerStatus === 'active' ? 'Активен' : 'Заблокирован'}</p>
             <div className="level-track">
-              <div className="level-dot active">Базовый</div>
-              <div className="level-dot">Про</div>
-              <div className="level-dot">Эксперт</div>
+              <div className={`level-dot ${partnerLevel === 'base' ? 'active' : ''}`}>Базовый</div>
+              <div className={`level-dot ${partnerLevel === 'extended' ? 'active' : ''}`}>Расширенный</div>
+              <div className={`level-dot ${partnerLevel === 'max' ? 'active' : ''}`}>Максимальный</div>
             </div>
           </div>
         </div>

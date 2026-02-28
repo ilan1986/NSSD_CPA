@@ -4,6 +4,8 @@ import { useAdmin } from '../context'
 const adminMenu = [
   { to: '/admin/partners', label: 'Партнеры' },
   { to: '/admin/leads', label: 'Лиды' },
+  { to: '/admin/reports', label: 'Отчеты' },
+  { to: '/admin/bulk-upload', label: 'Массовая загрузка лидов' },
   { to: '/admin/rewards', label: 'Вознаграждения' },
   { to: '/admin/users', label: 'Пользователи' },
   { to: '/admin/settings', label: 'Настройки' },

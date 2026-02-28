@@ -1,11 +1,16 @@
 ﻿import { useState } from 'react'
+import { Navigate } from 'react-router-dom'
 import { useAdmin } from '../context'
 
 export function RewardsPage() {
-  const { data, setPartnerRewardModel, setPartnerRewardOverride } = useAdmin()
+  const { adminUser, data, setPartnerRewardModel, setPartnerRewardOverride } = useAdmin()
   const [partnerId, setPartnerId] = useState(data.partners[0]?.id ?? '')
   const [modelId, setModelId] = useState(data.rewardModels[0]?.id ?? '')
   const [overrideValue, setOverrideValue] = useState('')
+
+  if (adminUser?.role !== 'admin') {
+    return <Navigate to="/admin/leads" replace />
+  }
 
   function applySettings() {
     if (!partnerId) return

@@ -1,9 +1,12 @@
 ﻿import { useMemo, useState } from 'react'
 import { SupportCta } from '../components/SupportCta'
+import type { PartnerFeatures } from '../admin/types'
 import type { User } from '../types'
 
 type LeadsPageProps = {
   user: User
+  features: PartnerFeatures
+  supportLink: string
 }
 
 type LeadStatus = 'new' | 'in_progress' | 'accepted' | 'rejected'
@@ -54,33 +57,6 @@ const seedLeads: Lead[] = [
       { status: 'in_progress', at: '2026-02-28T15:00:00.000Z', note: 'Лид взят в работу' },
     ],
   },
-  {
-    id: 'L-1003',
-    createdAt: '2026-02-27T09:05:00.000Z',
-    name: 'Алексей Орлов',
-    phone: '+7 905 777-88-99',
-    status: 'rejected',
-    partnerComment: 'Проверить повторно через неделю',
-    rejectionReason: 'Некорректный номер телефона (заглушка)',
-    history: [
-      { status: 'new', at: '2026-02-27T09:05:00.000Z', note: 'Лид создан' },
-      { status: 'in_progress', at: '2026-02-27T10:20:00.000Z', note: 'Лид взят в работу' },
-      { status: 'rejected', at: '2026-02-27T11:00:00.000Z', note: 'Лид отклонен' },
-    ],
-  },
-  {
-    id: 'L-1004',
-    createdAt: '2026-02-26T12:45:00.000Z',
-    name: 'Елена Котова',
-    phone: '+7 999 010-20-30',
-    status: 'accepted',
-    partnerComment: 'Подтвержден интерес к процедуре',
-    history: [
-      { status: 'new', at: '2026-02-26T12:45:00.000Z', note: 'Лид создан' },
-      { status: 'in_progress', at: '2026-02-26T13:20:00.000Z', note: 'Лид взят в работу' },
-      { status: 'accepted', at: '2026-02-26T16:10:00.000Z', note: 'Лид принят' },
-    ],
-  },
 ]
 
 function formatDate(value: string) {
@@ -91,7 +67,7 @@ function formatDateTime(value: string) {
   return new Date(value).toLocaleString('ru-RU')
 }
 
-export function LeadsPage({ user }: LeadsPageProps) {
+export function LeadsPage({ features, supportLink }: LeadsPageProps) {
   const [leads, setLeads] = useState<Lead[]>(seedLeads)
   const [statusFilter, setStatusFilter] = useState<'all' | LeadStatus>('all')
   const [dateFilter, setDateFilter] = useState('')
@@ -103,8 +79,7 @@ export function LeadsPage({ user }: LeadsPageProps) {
   const [formPhone, setFormPhone] = useState('')
   const [formComment, setFormComment] = useState('')
   const [formError, setFormError] = useState('')
-
-  const levelLabel = user.level === 'base' ? 'Базовый' : user.level === 'pro' ? 'Про' : 'Эксперт'
+  const [showBulkPanel, setShowBulkPanel] = useState(false)
 
   const filteredLeads = useMemo(() => {
     return leads.filter((lead) => {
@@ -175,18 +150,38 @@ export function LeadsPage({ user }: LeadsPageProps) {
         <div>
           <span className="eyebrow">Лиды</span>
           <h1>Лиды партнера</h1>
-          <p>{levelLabel} уровень. Доступны ручное добавление, фильтры и просмотр статусов.</p>
+          <p>Передача лидов, фильтры и карточка с историей статусов.</p>
         </div>
-        <button
-          className="primary-button"
-          onClick={() => {
-            setSelectedLeadId(null)
-            setShowAddForm(true)
-          }}
-        >
-          Добавить лида
-        </button>
+        <div className="pill-row">
+          <button
+            className="primary-button"
+            onClick={() => {
+              setSelectedLeadId(null)
+              setShowAddForm(true)
+            }}
+          >
+            Добавить лида
+          </button>
+          {features.bulkLeadUpload ? (
+            <button className="secondary-button" onClick={() => setShowBulkPanel((prev) => !prev)}>
+              Загрузить лиды файлом
+            </button>
+          ) : null}
+        </div>
       </header>
+
+      {!features.bulkLeadUpload ? (
+        <div className="form-info">Функция массовой загрузки доступна по запросу через поддержку.</div>
+      ) : null}
+
+      {showBulkPanel ? (
+        <section className="page-card">
+          <h3>Массовая загрузка лидов</h3>
+          <p className="muted">Выберите CSV или Excel файл и загрузите лиды пакетно.</p>
+          <input type="file" />
+          <div className="form-info">Файл принят в демо-режиме. Обработка выполняется на стороне сервера.</div>
+        </section>
+      ) : null}
 
       {isListMode ? (
         <>
@@ -231,37 +226,38 @@ export function LeadsPage({ user }: LeadsPageProps) {
               <span>Статус лида</span>
               <span>Комментарий</span>
             </div>
-            {filteredLeads.map((lead) => (
-              <button
-                key={lead.id}
-                className="table-row leads-table table-row-button"
-                onClick={() => setSelectedLeadId(lead.id)}
-              >
-                <span>{formatDate(lead.createdAt)}</span>
-                <strong>{lead.name}</strong>
-                <span>{lead.phone}</span>
-                <span className="status">{statusLabel[lead.status]}</span>
-                <span className="clamp-1">{lead.partnerComment || '—'}</span>
-              </button>
-            ))}
             {filteredLeads.length === 0 ? (
               <div className="table-row leads-table">
                 <span>—</span>
-                <span>Ничего не найдено</span>
+                <span>Здесь пока нет данных</span>
                 <span>—</span>
                 <span>—</span>
-                <span>Сбросьте фильтры или добавьте лид</span>
+                <span>Добавьте первого лида вручную или через файл</span>
               </div>
-            ) : null}
+            ) : (
+              filteredLeads.map((lead) => (
+                <button
+                  key={lead.id}
+                  className="table-row leads-table table-row-button"
+                  onClick={() => setSelectedLeadId(lead.id)}
+                >
+                  <span>{formatDate(lead.createdAt)}</span>
+                  <strong>{lead.name}</strong>
+                  <span>{lead.phone}</span>
+                  <span className="status">{statusLabel[lead.status]}</span>
+                  <span className="clamp-1">{lead.partnerComment || '—'}</span>
+                </button>
+              ))
+            )}
           </div>
 
           <section className="grid-2">
             <div className="page-card locked">
               <h3>Расширенные инструменты</h3>
-              <p>Массовая загрузка лидов, API и отчеты доступны на следующем уровне.</p>
-              <div className="lock-tag">Требуется уровень Про</div>
+              <p>API и расширенные отчеты включаются администратором в карточке партнера.</p>
+              <div className="lock-tag">Недоступно на текущем уровне</div>
             </div>
-            <SupportCta />
+            <SupportCta href={supportLink} />
           </section>
         </>
       ) : null}
@@ -316,13 +312,7 @@ export function LeadsPage({ user }: LeadsPageProps) {
               <button className="primary-button" type="submit">
                 Сохранить лид
               </button>
-              <button
-                className="secondary-button"
-                type="button"
-                onClick={() => {
-                  resetForm()
-                }}
-              >
+              <button className="secondary-button" type="button" onClick={resetForm}>
                 Очистить
               </button>
             </div>
@@ -380,7 +370,7 @@ export function LeadsPage({ user }: LeadsPageProps) {
                 </div>
               ))}
             </div>
-            <SupportCta variant="inline" />
+            <SupportCta variant="inline" href={supportLink} />
           </div>
         </section>
       ) : null}

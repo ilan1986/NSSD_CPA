@@ -25,6 +25,8 @@ export const initialAdminData: AdminData = {
       },
       rewardModelId: 'R-1',
       rewardOverride: null,
+      apiKey: null,
+      apiKeyActive: false,
     },
     {
       id: 'P-1002',
@@ -49,6 +51,8 @@ export const initialAdminData: AdminData = {
       },
       rewardModelId: 'R-2',
       rewardOverride: null,
+      apiKey: null,
+      apiKeyActive: false,
     },
     {
       id: 'P-1003',
@@ -73,6 +77,8 @@ export const initialAdminData: AdminData = {
       },
       rewardModelId: 'R-3',
       rewardOverride: 6200,
+      apiKey: 'nssd_live_1234567890abcdef',
+      apiKeyActive: true,
     },
   ],
   leads: [
@@ -138,9 +144,27 @@ export const initialAdminData: AdminData = {
     { id: 'U-1', name: 'Анна Оператор', email: 'operator@test.ru', role: 'operator', status: 'active' },
     { id: 'U-2', name: 'Старший Оператор', email: 'lead-op@test.ru', role: 'operator', status: 'blocked' },
   ],
+  reportTemplates: [
+    {
+      id: 'T-1',
+      name: 'Базовый отчет по лидам',
+      includeLeads: true,
+      includeStatuses: true,
+      includePartners: true,
+      includeDates: true,
+      columns: {
+        clientName: true,
+        phone: true,
+        partnerName: true,
+        status: true,
+        createdAt: true,
+      },
+    },
+  ],
   settings: {
     supportLink: 'https://t.me/example_support',
     platformName: 'NSSD CPA',
     platformNote: 'Управление партнерами и доступами',
   },
 }
+

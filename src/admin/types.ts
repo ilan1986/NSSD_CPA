@@ -37,6 +37,8 @@ export type PartnerRecord = {
   extraFields: PartnerExtraFields
   rewardModelId: string
   rewardOverride: number | null
+  apiKey: string | null
+  apiKeyActive: boolean
 }
 
 export type LeadStatus = 'new' | 'in_progress' | 'accepted' | 'rejected'
@@ -73,14 +75,32 @@ export type OperatorRecord = {
   status: 'active' | 'blocked'
 }
 
+export type ReportTemplate = {
+  id: string
+  name: string
+  includeLeads: boolean
+  includeStatuses: boolean
+  includePartners: boolean
+  includeDates: boolean
+  columns: {
+    clientName: boolean
+    phone: boolean
+    partnerName: boolean
+    status: boolean
+    createdAt: boolean
+  }
+}
+
 export type AdminData = {
   partners: PartnerRecord[]
   leads: AdminLead[]
   rewardModels: RewardModel[]
   operators: OperatorRecord[]
+  reportTemplates: ReportTemplate[]
   settings: {
     supportLink: string
     platformName: string
     platformNote: string
   }
 }
+

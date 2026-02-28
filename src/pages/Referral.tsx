@@ -1,8 +1,12 @@
 ﻿import { useState } from 'react'
+import { SupportCta } from '../components/SupportCta'
+import type { PartnerFeatures } from '../admin/types'
 import type { User } from '../types'
 
 type ReferralPageProps = {
   user: User
+  features: PartnerFeatures
+  supportLink: string
 }
 
 type PartnerLink = {
@@ -11,16 +15,15 @@ type PartnerLink = {
   value: string
 }
 
-export function ReferralPage({ user }: ReferralPageProps) {
+export function ReferralPage({ user, features, supportLink }: ReferralPageProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null)
-
-  const links: PartnerLink[] = [
+  const [links, setLinks] = useState<PartnerLink[]>([
     {
       id: 'main',
       label: 'Основная реферальная ссылка',
       value: `https://partner.bankrotstvo.ru/ref/${user.id.slice(0, 8)}`,
     },
-  ]
+  ])
 
   async function handleCopy(link: PartnerLink) {
     try {
@@ -32,15 +35,34 @@ export function ReferralPage({ user }: ReferralPageProps) {
     }
   }
 
+  function addLink() {
+    const id = `extra-${Math.floor(Math.random() * 1000)}`
+    const next: PartnerLink = {
+      id,
+      label: `Дополнительная ссылка ${links.length}`,
+      value: `https://partner.bankrotstvo.ru/ref/${user.id.slice(0, 6)}-${links.length}`,
+    }
+    setLinks((prev) => [...prev, next])
+  }
+
   return (
     <div className="page">
       <header className="page-header compact">
         <div>
           <span className="eyebrow">Реферальная ссылка</span>
           <h1>Привлечение лидов</h1>
-          <p>Используйте ссылку в рекламе и на своих площадках для передачи лидов.</p>
+          <p>Используйте реферальные ссылки в рекламе и каналах продвижения.</p>
         </div>
+        {features.multiReferralLinks ? (
+          <button className="secondary-button" onClick={addLink}>
+            Добавить ссылку
+          </button>
+        ) : null}
       </header>
+
+      {!features.multiReferralLinks ? (
+        <div className="form-info">Дополнительные ссылки доступны после активации функции администратором.</div>
+      ) : null}
 
       <section className="page-card links-list">
         {links.map((link) => (
@@ -70,10 +92,12 @@ export function ReferralPage({ user }: ReferralPageProps) {
         </div>
         <div className="page-card locked">
           <h3>Готовность к расширению</h3>
-          <p>В будущем вам будут доступны дополнительные ссылки, интеграции и расширенная аналитика</p>
-          <div className="lock-tag">Расширяемо без переделки экрана</div>
+          <p>В будущем вам будут доступны дополнительные ссылки, интеграции и расширенная аналитика.</p>
+          <div className="lock-tag">Архитектура готова к масштабированию</div>
         </div>
       </section>
+
+      <SupportCta href={supportLink} />
     </div>
   )
 }

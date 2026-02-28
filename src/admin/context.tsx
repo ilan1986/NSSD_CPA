@@ -10,6 +10,7 @@ import type {
   OperatorRecord,
   PartnerExtraFields,
   PartnerFeatures,
+  ReportTemplate,
 } from './types'
 
 type AdminContextValue = {
@@ -24,15 +25,18 @@ type AdminContextValue = {
   setPartnerExtraField: (partnerId: string, key: keyof PartnerExtraFields, value: boolean) => void
   setPartnerRewardModel: (partnerId: string, modelId: string) => void
   setPartnerRewardOverride: (partnerId: string, amount: number | null) => void
+  createApiKey: (partnerId: string) => void
+  disableApiKey: (partnerId: string) => void
   addOperator: (name: string, email: string, role: OperatorRecord['role']) => void
   setOperatorRole: (operatorId: string, role: OperatorRecord['role']) => void
   setOperatorStatus: (operatorId: string, status: OperatorRecord['status']) => void
   setLeadStatus: (leadId: string, status: LeadStatus, note: string) => void
+  saveReportTemplate: (template: ReportTemplate) => void
   setSupportLink: (link: string) => void
 }
 
-const ADMIN_USER_KEY = 'nssd:admin-user'
-const ADMIN_DATA_KEY = 'nssd:admin-data'
+export const ADMIN_USER_KEY = 'nssd:admin-user'
+export const ADMIN_DATA_KEY = 'nssd:admin-data'
 
 function loadAdminUser(): AdminUser | null {
   const raw = localStorage.getItem(ADMIN_USER_KEY)
@@ -44,7 +48,7 @@ function loadAdminUser(): AdminUser | null {
   }
 }
 
-function loadAdminData(): AdminData {
+export function loadAdminDataFromStorage(): AdminData {
   const raw = localStorage.getItem(ADMIN_DATA_KEY)
   if (!raw) return initialAdminData
   try {
@@ -58,7 +62,7 @@ const AdminContext = createContext<AdminContextValue | null>(null)
 
 export function AdminProvider({ children }: { children: React.ReactNode }) {
   const [adminUser, setAdminUser] = useState<AdminUser | null>(() => loadAdminUser())
-  const [data, setData] = useState<AdminData>(() => loadAdminData())
+  const [data, setData] = useState<AdminData>(() => loadAdminDataFromStorage())
 
   function persist(nextData: AdminData) {
     setData(nextData)
@@ -68,9 +72,10 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   function login(email: string, password: string): AdminUser | null {
     if (!email.trim() || password.trim().length < 3) return null
 
-    const role = email.toLowerCase().includes('operator') || email.toLowerCase().includes('op@')
-      ? 'operator'
-      : 'admin'
+    const role =
+      email.toLowerCase().includes('operator') || email.toLowerCase().includes('op@')
+        ? 'operator'
+        : 'admin'
     const user: AdminUser = {
       id: role === 'admin' ? 'A-1' : 'O-1',
       name: role === 'admin' ? 'Главный администратор' : 'Оператор',
@@ -87,57 +92,55 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem(ADMIN_USER_KEY)
   }
 
-  function setPartnerLevel(partnerId: string, level: AdminPartnerLevel) {
+  function updatePartner(partnerId: string, updater: (partner: AdminData['partners'][number]) => AdminData['partners'][number]) {
     persist({
       ...data,
-      partners: data.partners.map((p) => (p.id === partnerId ? { ...p, level } : p)),
+      partners: data.partners.map((partner) => (partner.id === partnerId ? updater(partner) : partner)),
     })
+  }
+
+  function setPartnerLevel(partnerId: string, level: AdminPartnerLevel) {
+    updatePartner(partnerId, (partner) => ({ ...partner, level }))
   }
 
   function setPartnerStatus(partnerId: string, status: AdminPartnerStatus) {
-    persist({
-      ...data,
-      partners: data.partners.map((p) => (p.id === partnerId ? { ...p, status } : p)),
-    })
+    updatePartner(partnerId, (partner) => ({ ...partner, status }))
   }
 
   function setPartnerComment(partnerId: string, comment: string) {
-    persist({
-      ...data,
-      partners: data.partners.map((p) => (p.id === partnerId ? { ...p, adminComment: comment } : p)),
-    })
+    updatePartner(partnerId, (partner) => ({ ...partner, adminComment: comment }))
   }
 
   function setPartnerFeature(partnerId: string, key: keyof PartnerFeatures, value: boolean) {
-    persist({
-      ...data,
-      partners: data.partners.map((p) =>
-        p.id === partnerId ? { ...p, features: { ...p.features, [key]: value } } : p,
-      ),
-    })
+    updatePartner(partnerId, (partner) => ({ ...partner, features: { ...partner.features, [key]: value } }))
   }
 
   function setPartnerExtraField(partnerId: string, key: keyof PartnerExtraFields, value: boolean) {
-    persist({
-      ...data,
-      partners: data.partners.map((p) =>
-        p.id === partnerId ? { ...p, extraFields: { ...p.extraFields, [key]: value } } : p,
-      ),
-    })
+    updatePartner(partnerId, (partner) => ({ ...partner, extraFields: { ...partner.extraFields, [key]: value } }))
   }
 
   function setPartnerRewardModel(partnerId: string, modelId: string) {
-    persist({
-      ...data,
-      partners: data.partners.map((p) => (p.id === partnerId ? { ...p, rewardModelId: modelId } : p)),
-    })
+    updatePartner(partnerId, (partner) => ({ ...partner, rewardModelId: modelId }))
   }
 
   function setPartnerRewardOverride(partnerId: string, amount: number | null) {
-    persist({
-      ...data,
-      partners: data.partners.map((p) => (p.id === partnerId ? { ...p, rewardOverride: amount } : p)),
-    })
+    updatePartner(partnerId, (partner) => ({ ...partner, rewardOverride: amount }))
+  }
+
+  function createApiKey(partnerId: string) {
+    updatePartner(partnerId, (partner) => ({
+      ...partner,
+      apiKey: `nssd_${crypto.randomUUID().replace(/-/g, '')}`,
+      apiKeyActive: true,
+      features: { ...partner.features, apiIntegration: true },
+    }))
+  }
+
+  function disableApiKey(partnerId: string) {
+    updatePartner(partnerId, (partner) => ({
+      ...partner,
+      apiKeyActive: false,
+    }))
   }
 
   function addOperator(name: string, email: string, role: OperatorRecord['role']) {
@@ -173,13 +176,20 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
           ? {
               ...lead,
               status,
-              history: [
-                ...lead.history,
-                { status, at: new Date().toLocaleString('ru-RU'), note },
-              ],
+              history: [...lead.history, { status, at: new Date().toLocaleString('ru-RU'), note }],
             }
           : lead,
       ),
+    })
+  }
+
+  function saveReportTemplate(template: ReportTemplate) {
+    const exists = data.reportTemplates.some((t) => t.id === template.id)
+    persist({
+      ...data,
+      reportTemplates: exists
+        ? data.reportTemplates.map((t) => (t.id === template.id ? template : t))
+        : [template, ...data.reportTemplates],
     })
   }
 
@@ -200,10 +210,13 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       setPartnerExtraField,
       setPartnerRewardModel,
       setPartnerRewardOverride,
+      createApiKey,
+      disableApiKey,
       addOperator,
       setOperatorRole,
       setOperatorStatus,
       setLeadStatus,
+      saveReportTemplate,
       setSupportLink,
     }),
     [adminUser, data],

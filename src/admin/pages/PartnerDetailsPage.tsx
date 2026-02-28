@@ -23,10 +23,19 @@ const extraFieldLabels: Record<keyof PartnerExtraFields, string> = {
   contractNumber: 'Номер договора',
 }
 
+function mask(value: string | null) {
+  if (!value) return 'Ключ не создан'
+  if (value.length <= 12) return value
+  return `${value.slice(0, 6)}••••••${value.slice(-6)}`
+}
+
 export function PartnerDetailsPage() {
   const { partnerId } = useParams()
   const {
+    adminUser,
     data,
+    createApiKey,
+    disableApiKey,
     setPartnerComment,
     setPartnerFeature,
     setPartnerExtraField,
@@ -35,6 +44,10 @@ export function PartnerDetailsPage() {
     setPartnerRewardModel,
     setPartnerRewardOverride,
   } = useAdmin()
+
+  if (adminUser?.role !== 'admin') {
+    return <Navigate to="/admin/leads" replace />
+  }
 
   const partner = data.partners.find((item) => item.id === partnerId)
 
@@ -150,6 +163,20 @@ export function PartnerDetailsPage() {
               </label>
             )
           })}
+        </div>
+      </section>
+
+      <section className="page-card">
+        <h3>API-доступ</h3>
+        <p className="muted">Статус: {partner.apiKeyActive ? 'Включен' : 'Выключен'}</p>
+        <div className="copy-row">
+          <input readOnly value={mask(partner.apiKey)} />
+          <button className="secondary-button" onClick={() => createApiKey(partner.id)}>
+            Создать API-ключ
+          </button>
+          <button className="secondary-button" onClick={() => disableApiKey(partner.id)}>
+            Отключить ключ
+          </button>
         </div>
       </section>
 

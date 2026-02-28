@@ -1,8 +1,11 @@
-﻿import { SupportCta } from '../components/SupportCta'
+﻿import { useMemo } from 'react'
+import { SupportCta } from '../components/SupportCta'
 import type { User } from '../types'
 
 type PayoutsPageProps = {
   user: User
+  partnerId: string | null
+  supportLink: string
 }
 
 type Accrual = {
@@ -13,18 +16,25 @@ type Accrual = {
   amount: number
 }
 
-const accruals: Accrual[] = [
-  { id: 'A-1', date: '2026-02-26', lead: 'Елена Котова', status: 'Начислено', amount: 4500 },
-  { id: 'A-2', date: '2026-02-28', lead: 'Мария Смирнова', status: 'Ожидает', amount: 0 },
-  { id: 'A-3', date: '2026-03-01', lead: 'Иван Петров', status: 'Отклонено', amount: 0 },
-]
+const accrualsByPartner: Record<string, Accrual[]> = {
+  'P-1001': [],
+  'P-1002': [
+    { id: 'A-1', date: '2026-02-26', lead: 'Елена Котова', status: 'Начислено', amount: 4500 },
+    { id: 'A-2', date: '2026-02-28', lead: 'Мария Смирнова', status: 'Ожидает', amount: 0 },
+  ],
+  'P-1003': [
+    { id: 'A-3', date: '2026-03-01', lead: 'Олег Ким', status: 'Начислено', amount: 6200 },
+    { id: 'A-4', date: '2026-03-01', lead: 'Иван Петров', status: 'Отклонено', amount: 0 },
+  ],
+}
 
 function formatMoney(value: number) {
   return new Intl.NumberFormat('ru-RU').format(value) + ' ₽'
 }
 
-export function PayoutsPage({ user }: PayoutsPageProps) {
-  const levelLabel = user.level === 'base' ? 'Базовый' : user.level === 'pro' ? 'Про' : 'Эксперт'
+export function PayoutsPage({ partnerId, supportLink }: PayoutsPageProps) {
+  const accruals = useMemo(() => (partnerId ? accrualsByPartner[partnerId] ?? [] : []), [partnerId])
+
   const currentBalance = accruals
     .filter((item) => item.status === 'Начислено')
     .reduce((sum, item) => sum + item.amount, 0)
@@ -36,7 +46,7 @@ export function PayoutsPage({ user }: PayoutsPageProps) {
         <div>
           <span className="eyebrow">Выплаты</span>
           <h1>Доход и выплаты</h1>
-          <p>Уровень доступа: {levelLabel}. Здесь отражаются начисления по лидам и доступный вывод.</p>
+          <p>Здесь отражаются начисления по лидам и доступный вывод.</p>
         </div>
         <div className="balance-cards">
           <div className="stat-card">
@@ -64,29 +74,36 @@ export function PayoutsPage({ user }: PayoutsPageProps) {
         )}
       </section>
 
-      <div className="table-card">
-        <div className="table-header payouts-table">
-          <span>Дата</span>
-          <span>Лид</span>
-          <span>Статус</span>
-          <span>Сумма</span>
-        </div>
-        {accruals.map((item) => (
-          <div className="table-row payouts-table" key={item.id}>
-            <span>{item.date}</span>
-            <strong>{item.lead}</strong>
-            <span className="status">{item.status}</span>
-            <span>{formatMoney(item.amount)}</span>
+      {accruals.length === 0 ? (
+        <section className="page-card">
+          <h3>Здесь пока нет данных</h3>
+          <p className="muted">Начисления появятся после принятия первых лидов.</p>
+        </section>
+      ) : (
+        <div className="table-card">
+          <div className="table-header payouts-table">
+            <span>Дата</span>
+            <span>Лид</span>
+            <span>Статус</span>
+            <span>Сумма</span>
           </div>
-        ))}
-      </div>
+          {accruals.map((item) => (
+            <div className="table-row payouts-table" key={item.id}>
+              <span>{item.date}</span>
+              <strong>{item.lead}</strong>
+              <span className="status">{item.status}</span>
+              <span>{formatMoney(item.amount)}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       <section className="grid-2">
-        <SupportCta />
+        <SupportCta href={supportLink} />
         <div className="page-card locked">
           <h3>Будущие расширения</h3>
           <p>Автовыплаты, API и детальная финансовая аналитика будут доступны позже.</p>
-          <div className="lock-tag">Требуется уровень Про</div>
+          <div className="lock-tag">Требуется активация через админку</div>
         </div>
       </section>
     </div>

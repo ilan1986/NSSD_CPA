@@ -1,5 +1,5 @@
 ﻿import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { useAdmin } from '../context'
 import type { AdminPartnerLevel, AdminPartnerStatus } from '../types'
 
@@ -15,9 +15,13 @@ const statusLabel: Record<AdminPartnerStatus, string> = {
 }
 
 export function PartnersPage() {
-  const { data } = useAdmin()
+  const { adminUser, data } = useAdmin()
   const [levelFilter, setLevelFilter] = useState<'all' | AdminPartnerLevel>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | AdminPartnerStatus>('all')
+
+  if (adminUser?.role !== 'admin') {
+    return <Navigate to="/admin/leads" replace />
+  }
 
   const partners = useMemo(
     () =>

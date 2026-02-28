@@ -71,3 +71,21 @@ export default defineConfig([
   },
 ])
 ```
+
+## Telegram Bot MVP
+
+1. Create `.env` from `.env.example` and set `TELEGRAM_BOT_TOKEN`.
+2. Run bot backend:
+
+```bash
+npm run bot:dev
+```
+
+3. In Telegram, send `/start` to your bot and provide a site URL.
+4. Use inline buttons for status, rescan and test chat.
+
+Available HTTP endpoints:
+- `GET /health`
+- `GET /api/chats/:chatId/projects`
+- `GET /api/projects/:projectId`
+- `POST /api/projects/:projectId/ask` with JSON `{ "question": "..." }`
