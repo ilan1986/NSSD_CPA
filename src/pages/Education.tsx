@@ -1,67 +1,111 @@
+﻿import { useMemo, useState } from 'react'
 import type { User } from '../types'
 
 type EducationPageProps = {
   user: User
 }
 
-const modules = [
+type Lesson = {
+  id: string
+  title: string
+  description: string
+}
+
+const baseLessons: Lesson[] = [
   {
-    title: 'Как работать с лидами',
-    description: 'Базовые сценарии и правила обработки.',
-    status: 'Доступно',
+    id: 'L1',
+    title: 'Введение в процесс банкротства',
+    description: 'Ключевые этапы и как объяснять их клиенту.',
   },
   {
-    title: 'Скрипты общения',
-    description: 'Как повышать конверсию на первом касании.',
-    status: 'Доступно',
+    id: 'L2',
+    title: 'Квалификация лида',
+    description: 'Какие вводные данные нужно собрать до передачи.',
   },
   {
-    title: 'Продвинутые воронки',
-    description: 'Доступно после повышения уровня.',
-    status: 'Скоро',
+    id: 'L3',
+    title: 'Скрипт первичного контакта',
+    description: 'Базовая структура разговора с клиентом.',
+  },
+  {
+    id: 'L4',
+    title: 'Частые возражения',
+    description: 'Как корректно отвечать и не терять интерес клиента.',
+  },
+  {
+    id: 'L5',
+    title: 'Проверка качества переданного лида',
+    description: 'Что влияет на принятие и отклонение.',
   },
 ]
 
 export function EducationPage({ user }: EducationPageProps) {
-  const levelLabel =
-    user.level === 'base' ? 'Базовый' : user.level === 'pro' ? 'Про' : 'Эксперт'
+  const [completedIds, setCompletedIds] = useState<string[]>([])
+
+  const levelLabel = user.level === 'base' ? 'Базовый' : user.level === 'pro' ? 'Про' : 'Эксперт'
+
+  const progress = useMemo(() => {
+    const percent = Math.round((completedIds.length / baseLessons.length) * 100)
+    return Number.isFinite(percent) ? percent : 0
+  }, [completedIds])
+
+  const isEducationCompleted = completedIds.length === baseLessons.length
+
+  function toggleLesson(id: string) {
+    setCompletedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+    )
+  }
 
   return (
     <div className="page">
       <header className="page-header">
         <div>
           <span className="eyebrow">Обучение</span>
-          <h1>Материалы для партнёров</h1>
-          <p>Ваш уровень: {levelLabel}. Часть модулей откроется позже.</p>
+          <h1>Обучение партнера</h1>
+          <p>Уровень доступа: {levelLabel}. Отметьте уроки как пройденные, чтобы завершить обучение.</p>
         </div>
         <div className="page-card highlight">
           <span className="badge">Прогресс</span>
-          <h3>0% пройдено</h3>
-          <p>Начните с базовых модулей.</p>
+          <h3>{progress}%</h3>
+          <p>
+            {completedIds.length} из {baseLessons.length} уроков завершено
+          </p>
         </div>
       </header>
 
-      <div className="card-grid">
-        {modules.map((item) => (
-          <div
-            key={item.title}
-            className={`page-card ${item.status !== 'Доступно' ? 'locked' : ''}`}
-          >
-            <h3>{item.title}</h3>
-            <p>{item.description}</p>
-            <div className="tag-row">
-              <span className="tag">{item.status}</span>
-            </div>
-          </div>
-        ))}
-      </div>
+      {!isEducationCompleted ? (
+        <div className="form-error">Для полноценной работы в системе необходимо пройти обучение</div>
+      ) : (
+        <div className="form-info">Обучение завершено. Базовые материалы пройдены полностью.</div>
+      )}
 
-      <section className="page-card">
-        <h3>Сессии с куратором</h3>
-        <p className="muted">
-          Персональные разборы доступны после подтверждения уровня Про.
-        </p>
-        <button className="secondary-button">Запросить консультацию</button>
+      <section className="page-card lessons-list">
+        {baseLessons.map((lesson) => {
+          const done = completedIds.includes(lesson.id)
+          return (
+            <article key={lesson.id} className="lesson-item">
+              <div>
+                <h3>{lesson.title}</h3>
+                <p className="muted">{lesson.description}</p>
+                <span className={`tag ${done ? 'tag-done' : ''}`}>
+                  {done ? 'Пройден' : 'Не пройден'}
+                </span>
+              </div>
+              <button className="secondary-button" onClick={() => toggleLesson(lesson.id)}>
+                Смотреть
+              </button>
+            </article>
+          )
+        })}
+      </section>
+
+      <section className="grid-2">
+        <div className="page-card locked">
+          <h3>Расширенное обучение</h3>
+          <p>Продвинутые модули, тесты и сертификация будут подключены позже.</p>
+          <div className="lock-tag">Требуется уровень Про</div>
+        </div>
       </section>
     </div>
   )

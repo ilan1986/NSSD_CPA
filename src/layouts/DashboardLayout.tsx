@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom'
+﻿import { NavLink, Outlet } from 'react-router-dom'
 import type { User } from '../types'
 
 type DashboardLayoutProps = {
@@ -24,13 +24,13 @@ export function DashboardLayout({ user, onLogout }: DashboardLayoutProps) {
             <div className="brand-mark">CPA</div>
             <div className="brand-text">
               <span>Личный кабинет</span>
-              <strong>Партнёр</strong>
+              <strong>Партнер</strong>
             </div>
           </div>
           <div className="level-card">
             <span className="badge">Уровень</span>
             <strong>Базовый</strong>
-            <p>Доступ к ключевым разделам и аналитике.</p>
+            <p>Доступ к базовым инструментам и ключевой аналитике.</p>
             <div className="level-track">
               <div className="level-dot active">Базовый</div>
               <div className="level-dot">Про</div>
@@ -38,25 +38,25 @@ export function DashboardLayout({ user, onLogout }: DashboardLayoutProps) {
             </div>
           </div>
         </div>
+
         <nav className="menu">
           {menu.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
-              className={({ isActive }) =>
-                isActive ? 'menu-link active' : 'menu-link'
-              }
+              className={({ isActive }) => (isActive ? 'menu-link active' : 'menu-link')}
             >
               {item.label}
             </NavLink>
           ))}
         </nav>
+
         <div className="sidebar-footer">
           <div className="user-chip">
             <div className="user-avatar">{user.contact.charAt(0).toUpperCase()}</div>
             <div className="user-meta">
               <span>{user.contact}</span>
-              <small>Партнёр с {new Date(user.createdAt).toLocaleDateString()}</small>
+              <small>Партнер с {new Date(user.createdAt).toLocaleDateString('ru-RU')}</small>
             </div>
           </div>
           <button className="ghost-button" onClick={onLogout}>
@@ -64,9 +64,11 @@ export function DashboardLayout({ user, onLogout }: DashboardLayoutProps) {
           </button>
         </div>
       </aside>
+
       <main className="main-content">
         <Outlet />
       </main>
+
       <NavLink className="support-fab" to="/app/support">
         Написать в поддержку
       </NavLink>

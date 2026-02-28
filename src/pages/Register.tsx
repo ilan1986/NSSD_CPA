@@ -1,8 +1,8 @@
 ﻿import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import type { User } from '../types'
-import { createPartner } from '../services/partners'
 import { isSupabaseEnabled } from '../lib/supabase'
+import { createPartner } from '../services/partners'
+import type { User } from '../types'
 
 type RegisterPageProps = {
   auth: {
@@ -26,7 +26,7 @@ export function RegisterPage({ auth }: RegisterPageProps) {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!isValid) {
-      setError('Р—Р°РїРѕР»РЅРёС‚Рµ РїРѕР»СЏ Рё РїРѕРґС‚РІРµСЂРґРёС‚Рµ СЃРѕРіР»Р°СЃРёРµ СЃ СѓСЃР»РѕРІРёСЏРјРё.')
+      setError('Заполните обязательные поля и подтвердите согласие с условиями')
       return
     }
 
@@ -42,7 +42,7 @@ export function RegisterPage({ auth }: RegisterPageProps) {
     if (isSupabaseEnabled) {
       const result = await createPartner(nextUser)
       if (!result.ok) {
-        setInfo('РџСЂРѕС„РёР»СЊ СЃРѕС…СЂР°РЅС‘РЅ Р»РѕРєР°Р»СЊРЅРѕ. РћС€РёР±РєР° Р·Р°РїРёСЃРё РІ Р‘Р”.')
+        setInfo('Профиль сохранен локально. Запись в БД будет повторена после настройки сервера.')
       }
     }
 
@@ -52,25 +52,25 @@ export function RegisterPage({ auth }: RegisterPageProps) {
   return (
     <div className="auth-card">
       <div className="auth-header">
-        <span className="eyebrow">Р РµРіРёСЃС‚СЂР°С†РёСЏ</span>
-        <h2>РЎРѕР·РґР°Р№С‚Рµ РїР°СЂС‚РЅС‘СЂСЃРєРёР№ Р°РєРєР°СѓРЅС‚</h2>
-        <p>РЎС‚Р°СЂС‚РѕРІС‹Р№ РґРѕСЃС‚СѓРї вЂ” Р±Р°Р·РѕРІС‹Р№. РџРѕСЃР»Рµ Р°РєС‚РёРІР°С†РёРё СЃРјРѕР¶РµС‚Рµ РїРѕРІС‹С€Р°С‚СЊ СѓСЂРѕРІРµРЅСЊ.</p>
+        <span className="eyebrow">Регистрация</span>
+        <h2>Создайте аккаунт партнера</h2>
+        <p>Все новые партнеры получают базовый уровень доступа.</p>
       </div>
       <form className="auth-form" onSubmit={handleSubmit}>
         <label className="field">
-          Email РёР»Рё С‚РµР»РµС„РѕРЅ
+          Email или телефон
           <input
             type="text"
-            placeholder="partner@email.ru РёР»Рё +7 900 000-00-00"
+            placeholder="partner@email.ru или +7 900 000-00-00"
             value={contact}
             onChange={(event) => setContact(event.target.value)}
           />
         </label>
         <label className="field">
-          РџР°СЂРѕР»СЊ
+          Пароль
           <input
             type="password"
-            placeholder="РњРёРЅРёРјСѓРј 6 СЃРёРјРІРѕР»РѕРІ"
+            placeholder="Минимум 6 символов"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
           />
@@ -81,18 +81,17 @@ export function RegisterPage({ auth }: RegisterPageProps) {
             checked={agree}
             onChange={(event) => setAgree(event.target.checked)}
           />
-          РЎРѕРіР»Р°СЃРµРЅ СЃ СѓСЃР»РѕРІРёСЏРјРё РїР°СЂС‚РЅС‘СЂСЃРєРѕР№ РїСЂРѕРіСЂР°РјРјС‹
+          Согласен с условиями партнерской программы
         </label>
         {error ? <div className="form-error">{error}</div> : null}
         {info ? <div className="form-info">{info}</div> : null}
         <button className="primary-button" type="submit" disabled={!isValid}>
-          РЎРѕР·РґР°С‚СЊ Р°РєРєР°СѓРЅС‚
+          Создать аккаунт
         </button>
       </form>
       <div className="auth-footer">
-        РЈР¶Рµ РµСЃС‚СЊ Р°РєРєР°СѓРЅС‚? <Link to="/login">Р’РѕР№С‚Рё</Link>
+        Уже есть аккаунт? <Link to="/login">Войти</Link>
       </div>
     </div>
   )
 }
-

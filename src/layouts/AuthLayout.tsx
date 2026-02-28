@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+﻿import type { ReactNode } from 'react'
 
 type AuthLayoutProps = {
   children: ReactNode
@@ -11,19 +11,19 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         <div className="brand">
           <div className="brand-mark">CPA</div>
           <div className="brand-text">
-            <span>Партнёрская платформа</span>
+            <span>Партнерская платформа</span>
             <strong>Банкротство физлиц</strong>
           </div>
         </div>
-        <h1>Личный кабинет партнёра</h1>
+        <h1>Личный кабинет партнера</h1>
         <p>
-          Отправляйте лиды, отслеживайте статус и выплаты. Все партнёры
-          стартуют с базового уровня и могут повышаться по мере результатов.
+          Отправляйте лиды, отслеживайте статусы и выплаты. Все партнеры стартуют с базового
+          уровня и могут расширять доступ по мере результатов.
         </p>
         <div className="hero-cards">
           <div className="hero-card">
             <span className="hero-label">Быстрый старт</span>
-            <strong>3 минуты на регистрацию</strong>
+            <strong>Регистрация за 3 минуты</strong>
           </div>
           <div className="hero-card">
             <span className="hero-label">Прозрачность</span>
@@ -34,9 +34,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
             <strong>Всегда на связи</strong>
           </div>
         </div>
-        <div className="hero-note">
-          MVP • Этап 1 • UI и сценарии
-        </div>
+        <div className="hero-note">MVP • Неделя 2 • Пользовательский сценарий</div>
       </section>
       <section className="auth-panel">{children}</section>
     </div>

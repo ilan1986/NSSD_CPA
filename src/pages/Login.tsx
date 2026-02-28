@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+﻿import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import type { User } from '../types'
 import { loadUser } from '../utils/auth'
@@ -23,7 +23,7 @@ export function LoginPage({ auth }: LoginPageProps) {
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!isValid) {
-      setError('Введите корректный email или телефон и пароль.')
+      setError('Введите корректный email или телефон и пароль')
       return
     }
 
@@ -46,8 +46,8 @@ export function LoginPage({ auth }: LoginPageProps) {
     <div className="auth-card">
       <div className="auth-header">
         <span className="eyebrow">Вход</span>
-        <h2>Рады видеть снова</h2>
-        <p>Введите данные партнёра, чтобы продолжить работу.</p>
+        <h2>Вход в кабинет партнера</h2>
+        <p>Введите данные аккаунта, чтобы продолжить работу с лидами и выплатами.</p>
       </div>
       <form className="auth-form" onSubmit={handleSubmit}>
         <label className="field">

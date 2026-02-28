@@ -1,84 +1,389 @@
+﻿import { useMemo, useState } from 'react'
+import { SupportCta } from '../components/SupportCta'
 import type { User } from '../types'
 
 type LeadsPageProps = {
   user: User
 }
 
-const leads = [
+type LeadStatus = 'new' | 'in_progress' | 'accepted' | 'rejected'
+
+type LeadHistoryItem = {
+  status: LeadStatus
+  at: string
+  note: string
+}
+
+type Lead = {
+  id: string
+  createdAt: string
+  name: string
+  phone: string
+  status: LeadStatus
+  partnerComment: string
+  rejectionReason?: string
+  history: LeadHistoryItem[]
+}
+
+const statusLabel: Record<LeadStatus, string> = {
+  new: 'Новый',
+  in_progress: 'В работе',
+  accepted: 'Принят',
+  rejected: 'Отклонен',
+}
+
+const seedLeads: Lead[] = [
   {
-    name: 'Иван П.',
-    source: 'Реферальная ссылка',
-    status: 'Ожидает проверки',
-    value: '—',
+    id: 'L-1001',
+    createdAt: '2026-03-01T10:30:00.000Z',
+    name: 'Иван Петров',
+    phone: '+7 901 123-45-67',
+    status: 'new',
+    partnerComment: 'Оставил заявку на консультацию',
+    history: [{ status: 'new', at: '2026-03-01T10:30:00.000Z', note: 'Лид создан' }],
   },
   {
-    name: 'Мария К.',
-    source: 'Форма заявки',
-    status: 'Принят',
-    value: '—',
+    id: 'L-1002',
+    createdAt: '2026-02-28T14:10:00.000Z',
+    name: 'Мария Смирнова',
+    phone: '+7 903 987-00-11',
+    status: 'in_progress',
+    partnerComment: 'Удобно звонить после 18:00',
+    history: [
+      { status: 'new', at: '2026-02-28T14:10:00.000Z', note: 'Лид создан' },
+      { status: 'in_progress', at: '2026-02-28T15:00:00.000Z', note: 'Лид взят в работу' },
+    ],
   },
   {
-    name: 'Алексей С.',
-    source: 'Реферальная ссылка',
-    status: 'На связи',
-    value: '—',
+    id: 'L-1003',
+    createdAt: '2026-02-27T09:05:00.000Z',
+    name: 'Алексей Орлов',
+    phone: '+7 905 777-88-99',
+    status: 'rejected',
+    partnerComment: 'Проверить повторно через неделю',
+    rejectionReason: 'Некорректный номер телефона (заглушка)',
+    history: [
+      { status: 'new', at: '2026-02-27T09:05:00.000Z', note: 'Лид создан' },
+      { status: 'in_progress', at: '2026-02-27T10:20:00.000Z', note: 'Лид взят в работу' },
+      { status: 'rejected', at: '2026-02-27T11:00:00.000Z', note: 'Лид отклонен' },
+    ],
+  },
+  {
+    id: 'L-1004',
+    createdAt: '2026-02-26T12:45:00.000Z',
+    name: 'Елена Котова',
+    phone: '+7 999 010-20-30',
+    status: 'accepted',
+    partnerComment: 'Подтвержден интерес к процедуре',
+    history: [
+      { status: 'new', at: '2026-02-26T12:45:00.000Z', note: 'Лид создан' },
+      { status: 'in_progress', at: '2026-02-26T13:20:00.000Z', note: 'Лид взят в работу' },
+      { status: 'accepted', at: '2026-02-26T16:10:00.000Z', note: 'Лид принят' },
+    ],
   },
 ]
 
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString('ru-RU')
+}
+
+function formatDateTime(value: string) {
+  return new Date(value).toLocaleString('ru-RU')
+}
+
 export function LeadsPage({ user }: LeadsPageProps) {
-  const levelLabel =
-    user.level === 'base' ? 'Базовый' : user.level === 'pro' ? 'Про' : 'Эксперт'
+  const [leads, setLeads] = useState<Lead[]>(seedLeads)
+  const [statusFilter, setStatusFilter] = useState<'all' | LeadStatus>('all')
+  const [dateFilter, setDateFilter] = useState('')
+  const [query, setQuery] = useState('')
+
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null)
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [formName, setFormName] = useState('')
+  const [formPhone, setFormPhone] = useState('')
+  const [formComment, setFormComment] = useState('')
+  const [formError, setFormError] = useState('')
+
+  const levelLabel = user.level === 'base' ? 'Базовый' : user.level === 'pro' ? 'Про' : 'Эксперт'
+
+  const filteredLeads = useMemo(() => {
+    return leads.filter((lead) => {
+      if (statusFilter !== 'all' && lead.status !== statusFilter) {
+        return false
+      }
+
+      if (dateFilter) {
+        const leadDate = new Date(lead.createdAt).toISOString().slice(0, 10)
+        if (leadDate !== dateFilter) {
+          return false
+        }
+      }
+
+      if (query.trim()) {
+        const normalized = query.trim().toLowerCase()
+        const target = `${lead.name} ${lead.phone}`.toLowerCase()
+        if (!target.includes(normalized)) {
+          return false
+        }
+      }
+
+      return true
+    })
+  }, [leads, statusFilter, dateFilter, query])
+
+  const selectedLead = useMemo(
+    () => leads.find((lead) => lead.id === selectedLeadId) ?? null,
+    [leads, selectedLeadId],
+  )
+
+  function resetForm() {
+    setFormName('')
+    setFormPhone('')
+    setFormComment('')
+    setFormError('')
+  }
+
+  function submitLead(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!formName.trim() || !formPhone.trim()) {
+      setFormError('Имя клиента и телефон обязательны')
+      return
+    }
+
+    const now = new Date().toISOString()
+    const newLead: Lead = {
+      id: `L-${Math.floor(Math.random() * 9000 + 1000)}`,
+      createdAt: now,
+      name: formName.trim(),
+      phone: formPhone.trim(),
+      status: 'new',
+      partnerComment: formComment.trim(),
+      history: [{ status: 'new', at: now, note: 'Лид создан' }],
+    }
+
+    setLeads((prev) => [newLead, ...prev])
+    setShowAddForm(false)
+    setSelectedLeadId(newLead.id)
+    resetForm()
+  }
+
+  const isListMode = !showAddForm && !selectedLead
 
   return (
     <div className="page">
       <header className="page-header compact">
         <div>
           <span className="eyebrow">Лиды</span>
-          <h1>Список лидов</h1>
-          <p>{levelLabel} уровень: просмотр статусов и карточек.</p>
+          <h1>Лиды партнера</h1>
+          <p>{levelLabel} уровень. Доступны ручное добавление, фильтры и просмотр статусов.</p>
         </div>
-        <button className="primary-button">Добавить лид</button>
+        <button
+          className="primary-button"
+          onClick={() => {
+            setSelectedLeadId(null)
+            setShowAddForm(true)
+          }}
+        >
+          Добавить лида
+        </button>
       </header>
 
-      <div className="table-card">
-        <div className="table-header">
-          <span>Клиент</span>
-          <span>Источник</span>
-          <span>Статус</span>
-          <span>Начисление</span>
-        </div>
-        {leads.map((lead) => (
-          <div className="table-row" key={lead.name}>
-            <strong>{lead.name}</strong>
-            <span>{lead.source}</span>
-            <span className="status">{lead.status}</span>
-            <span>{lead.value}</span>
-          </div>
-        ))}
-        <div className="table-footer">
-          Данные демонстрационные, реальные лиды появятся после интеграции.
-        </div>
-      </div>
+      {isListMode ? (
+        <>
+          <section className="page-card filters-row">
+            <label className="field compact-field">
+              Статус
+              <select
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value as 'all' | LeadStatus)}
+              >
+                <option value="all">Все</option>
+                <option value="new">Новый</option>
+                <option value="in_progress">В работе</option>
+                <option value="accepted">Принят</option>
+                <option value="rejected">Отклонен</option>
+              </select>
+            </label>
+            <label className="field compact-field">
+              Дата
+              <input
+                type="date"
+                value={dateFilter}
+                onChange={(event) => setDateFilter(event.target.value)}
+              />
+            </label>
+            <label className="field compact-field grow">
+              Поиск
+              <input
+                type="text"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Имя клиента или телефон"
+              />
+            </label>
+          </section>
 
-      <section className="grid-2">
-        <div className="page-card">
-          <h3>Фильтры и теги</h3>
-          <p className="muted">
-            Готова архитектура для фильтров. Доступ будет расширяться при
-            повышении уровня.
-          </p>
-          <div className="pill-row">
-            <span className="pill">Новый</span>
-            <span className="pill">В работе</span>
-            <span className="pill">Принят</span>
+          <div className="table-card">
+            <div className="table-header leads-table">
+              <span>Дата создания</span>
+              <span>Имя клиента</span>
+              <span>Телефон</span>
+              <span>Статус лида</span>
+              <span>Комментарий</span>
+            </div>
+            {filteredLeads.map((lead) => (
+              <button
+                key={lead.id}
+                className="table-row leads-table table-row-button"
+                onClick={() => setSelectedLeadId(lead.id)}
+              >
+                <span>{formatDate(lead.createdAt)}</span>
+                <strong>{lead.name}</strong>
+                <span>{lead.phone}</span>
+                <span className="status">{statusLabel[lead.status]}</span>
+                <span className="clamp-1">{lead.partnerComment || '—'}</span>
+              </button>
+            ))}
+            {filteredLeads.length === 0 ? (
+              <div className="table-row leads-table">
+                <span>—</span>
+                <span>Ничего не найдено</span>
+                <span>—</span>
+                <span>—</span>
+                <span>Сбросьте фильтры или добавьте лид</span>
+              </div>
+            ) : null}
           </div>
-        </div>
-        <div className="page-card locked">
-          <h3>Экспорт лидов</h3>
-          <p>Доступно на уровне Про.</p>
-          <div className="lock-tag">Требуется уровень Про</div>
-        </div>
-      </section>
+
+          <section className="grid-2">
+            <div className="page-card locked">
+              <h3>Расширенные инструменты</h3>
+              <p>Массовая загрузка лидов, API и отчеты доступны на следующем уровне.</p>
+              <div className="lock-tag">Требуется уровень Про</div>
+            </div>
+            <SupportCta />
+          </section>
+        </>
+      ) : null}
+
+      {showAddForm ? (
+        <section className="page-card form-card">
+          <div className="card-actions-top">
+            <h3>Добавление лида</h3>
+            <button
+              className="ghost-button"
+              onClick={() => {
+                setShowAddForm(false)
+                resetForm()
+              }}
+            >
+              Назад к списку
+            </button>
+          </div>
+          <form className="support-form" onSubmit={submitLead}>
+            <label className="field">
+              Имя клиента
+              <input
+                type="text"
+                value={formName}
+                onChange={(event) => setFormName(event.target.value)}
+                placeholder="Например: Сергей Иванов"
+              />
+            </label>
+            <label className="field">
+              Телефон
+              <input
+                type="text"
+                value={formPhone}
+                onChange={(event) => setFormPhone(event.target.value)}
+                placeholder="+7 900 000-00-00"
+              />
+            </label>
+            <label className="field">
+              Комментарий (необязательно)
+              <textarea
+                rows={4}
+                value={formComment}
+                onChange={(event) => setFormComment(event.target.value)}
+                placeholder="Короткая заметка"
+              />
+            </label>
+            <div className="form-info">
+              Перед отправкой убедитесь, что клиент дал согласие на обработку персональных данных.
+            </div>
+            {formError ? <div className="form-error">{formError}</div> : null}
+            <div className="card-actions-bottom">
+              <button className="primary-button" type="submit">
+                Сохранить лид
+              </button>
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => {
+                  resetForm()
+                }}
+              >
+                Очистить
+              </button>
+            </div>
+          </form>
+        </section>
+      ) : null}
+
+      {selectedLead ? (
+        <section className="grid-2 detail-grid">
+          <div className="page-card">
+            <div className="card-actions-top">
+              <h3>Карточка лида</h3>
+              <button className="ghost-button" onClick={() => setSelectedLeadId(null)}>
+                Назад к списку
+              </button>
+            </div>
+            <div className="details-list">
+              <div>
+                <span className="muted">Имя клиента</span>
+                <strong>{selectedLead.name}</strong>
+              </div>
+              <div>
+                <span className="muted">Телефон</span>
+                <strong>{selectedLead.phone}</strong>
+              </div>
+              <div>
+                <span className="muted">Дата создания</span>
+                <strong>{formatDateTime(selectedLead.createdAt)}</strong>
+              </div>
+              <div>
+                <span className="muted">Текущий статус</span>
+                <strong>{statusLabel[selectedLead.status]}</strong>
+              </div>
+              <div>
+                <span className="muted">Комментарий партнера</span>
+                <strong>{selectedLead.partnerComment || '—'}</strong>
+              </div>
+            </div>
+            {selectedLead.status === 'rejected' ? (
+              <div className="form-error">Причина отклонения: {selectedLead.rejectionReason || 'Не указана'}</div>
+            ) : null}
+          </div>
+
+          <div className="page-card">
+            <h3>История статусов</h3>
+            <div className="timeline">
+              {selectedLead.history.map((item) => (
+                <div key={`${selectedLead.id}-${item.status}-${item.at}`} className="timeline-item">
+                  <div className="timeline-dot" />
+                  <div>
+                    <strong>{statusLabel[item.status]}</strong>
+                    <p>{item.note}</p>
+                    <small>{formatDateTime(item.at)}</small>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <SupportCta variant="inline" />
+          </div>
+        </section>
+      ) : null}
     </div>
   )
 }

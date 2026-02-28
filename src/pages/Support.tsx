@@ -1,4 +1,4 @@
-import type { User } from '../types'
+﻿import type { User } from '../types'
 
 type SupportPageProps = {
   user: User
@@ -10,8 +10,8 @@ export function SupportPage({ user }: SupportPageProps) {
       <header className="page-header compact">
         <div>
           <span className="eyebrow">Поддержка</span>
-          <h1>Мы рядом</h1>
-          <p>Оставьте заявку, и менеджер свяжется с вами.</p>
+          <h1>Мы на связи</h1>
+          <p>Оставьте заявку, и менеджер свяжется с вами в рабочее время.</p>
         </div>
       </header>
 
@@ -25,17 +25,18 @@ export function SupportPage({ user }: SupportPageProps) {
             </label>
             <label className="field">
               Сообщение
-              <textarea rows={5} placeholder="Опишите запрос" />
+              <textarea rows={5} placeholder="Опишите ваш запрос" />
             </label>
             <button className="primary-button" type="button">
               Отправить
             </button>
           </form>
         </div>
+
         <div className="page-card highlight">
           <span className="badge">Контакты</span>
           <h3>Персональный менеджер</h3>
-          <p>Ответим в течение рабочего дня.</p>
+          <p>Среднее время ответа: до 1 рабочего дня.</p>
           <div className="contact-list">
             <div>
               <span className="label">Email</span>
@@ -46,7 +47,7 @@ export function SupportPage({ user }: SupportPageProps) {
               <strong>8 800 000-00-00</strong>
             </div>
           </div>
-          <div className="muted">Текущий партнёр: {user.contact}</div>
+          <div className="muted">Текущий партнер: {user.contact}</div>
         </div>
       </section>
     </div>
