@@ -207,6 +207,14 @@ textarea {
   font-size: 0.9rem;
 }
 
+.form-info {
+  color: #2f6b57;
+  background: #eaf4f0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+
 .primary-button,
 .secondary-button,
 .ghost-button {
